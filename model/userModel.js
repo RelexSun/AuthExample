@@ -48,21 +48,40 @@ const userSchema = new Schema({
   passwordResetExpires: Date,
 });
 
+//The userSchema.pre("save", ...) middleware in Mongoose is a pre-save hook that runs before saving a document to the database. In this case, it is used to perform operations before saving a user document, specifically for hashing the password.
+
 userSchema.pre("save", async function (next) {
+  // the hashing works only when there's a new user with new password or when user changes their password
   if (!this.isModified("password")) return next();
 
-  this.password = await bcrypt.hash(this.password, 12);
+  this.password = await bcrypt.hash(this.password, 12); // hashing password
 
   this.passwordConfirm = undefined;
 
   next();
 });
 
+// comparing password for logging in the user
 userSchema.methods.correctPassword = async function (
   candidatePassword,
   userPassword
 ) {
   return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+// this instance method is used to determine whether the user had change the password or not
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+    console.log(changedTimestamp, JWTTimestamp);
+    return JWTTimestamp < changedTimestamp;
+  }
+
+  // False means NOT changed
+  return false;
 };
 
 module.exports = model("User", userSchema);
