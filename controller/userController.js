@@ -9,3 +9,9 @@ exports.getUser = catchAsync(async (req, res) => {
     },
   });
 });
+
+exports.deleteUser = catchAsync(async (req, res) => {
+  res.status(200).json({
+    message: "Success but this route is not implement yet",
+  });
+});
